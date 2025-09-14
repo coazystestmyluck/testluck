@@ -10146,7 +10146,7 @@ end)
             UIConfig = RevengersDos,
         },
         ["Mighty Omega"] = {
-            PlaceIds = {4878988249, 109581692646110},
+            PlaceIds = {109581692646110},
             UIConfig = MO,
         },
         ["Tatakai: Remastered"] = {
