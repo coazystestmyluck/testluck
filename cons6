@@ -3452,9 +3452,10 @@ local VIM = game:GetService("VirtualInputManager")
 
 local player = Players.LocalPlayer
 local plz = player.Name
-
 task.spawn(function()
     local lastPower = nil
+    local hasSpammed = false
+
     while true do
         local success, currentPower = pcall(function()
             return workspace.Live[plz].CurrentPower.Value
@@ -3462,13 +3463,7 @@ task.spawn(function()
 
         if success then
             if currentPower >= 98 then
-                -- First time entering this range, set baseline
-                if not lastPower then
-                    lastPower = currentPower
-                end
-
-                -- If power hasn’t changed, keep spamming
-                if currentPower == lastPower then
+                if not hasSpammed then
                     -- Press Y
                     VIM:SendKeyEvent(true, "Y", false, game)
                     VIM:SendKeyEvent(false, "Y", false, game)
@@ -3477,24 +3472,27 @@ task.spawn(function()
                     VIM:SendKeyEvent(true, "T", false, game)
                     VIM:SendKeyEvent(false, "T", false, game)
 
-                    task.wait(4)
-
-                    -- Spam H
+                    -- Spam H quickly
                     for i = 1, 10 do
                         VIM:SendKeyEvent(true, "H", false, game)
                         task.wait(0.05)
                     end
                     VIM:SendKeyEvent(false, "H", false, game)
 
-                    task.wait(5) -- wait 5s before checking again
-                else
-                    -- Value changed → reset & stop spamming
-                    lastPower = nil
+                    hasSpammed = true
                 end
             else
-                lastPower = nil
-                task.wait(0.1)
+                -- Out of range → reset
+                hasSpammed = false
             end
+
+            -- If power changes at all, reset spamming
+            if lastPower ~= nil and currentPower ~= lastPower then
+                hasSpammed = false
+            end
+
+            lastPower = currentPower
+            task.wait(0.1)
         else
             task.wait(0.5)
         end
