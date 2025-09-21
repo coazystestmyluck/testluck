@@ -98,6 +98,17 @@ local function fireUpgradeClick(upgradeName)
 end
 
 local function triggerPlayButtonAndUpgrade()
+    local player = Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+
+    -- ✅ Skip if character is already loaded
+    if hrp then
+        print("HumanoidRootPart detected, skipping Play button wait.")
+        fireUpgradeClick("cons")
+        return
+    end
+
     local loadMenu = Gui:WaitForChild("LoadMenu", 120)
     local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 120)
     local playButton = mainFrame and mainFrame:WaitForChild("Play", 120)
@@ -118,7 +129,6 @@ local function triggerPlayButtonAndUpgrade()
         warn("Play button GUI not found within 2 min, continuing anyway...")
     end
 
-    -- Always continue with upgrades
     fireUpgradeClick("cons")
 end
 
@@ -217,52 +227,58 @@ task.spawn(function()
         else
             -- ================= NOT ALLOWED ACTIONS =================
             if game.PlaceId == 4878988249 then
-                local loadMenu = Gui:WaitForChild("LoadMenu", 20)
-                local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 20)
-                local playButton = mainFrame and mainFrame:WaitForChild("Play", 20)
+                local player = Players.LocalPlayer
+                local character = player.Character or player.CharacterAdded:Wait()
+                local hrp = character:FindFirstChild("HumanoidRootPart")
 
-                if playButton then
-                    local startTime = os.clock()
-                    while (not playButton.Visible) and os.clock() - startTime < 30 do
-                        task.wait(1)
-                    end
-
-                    if playButton.Visible then
-                        for i = 1, 300 do
-                            for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
-                                connection.Function()
-                            end
-                            task.wait(0.2)
-                        end
-
-                        -- ✅ After successful clicks, wait 20s then check macro button state
-                        task.wait(60)
-                        local player = Players.LocalPlayer
-                        local button = player.PlayerGui.MainGui.MacroButtonF.SelectionF.Start.Title.ContentText
-
-                        if button == "START" then
-                            -- username-based choice
-                            local trainingName = "Striking Power Training"
-                            if player.Name == "flextall1" or player.Name == "Rykujin" then
-                                trainingName = "Strike Speed Training"
-                            end
-
-                            local butt = player.PlayerGui.MainGui.MacroButtonF.SelectionF.SF.Holder:FindFirstChild(trainingName)
-                            if butt then
-                                firesignal(butt.MouseButton1Up)
-                                equipAndActivate()
-                            end
-
-                            task.wait(2) 
-
-                            local startButton = player.PlayerGui.MainGui.MacroButtonF.SelectionF:FindFirstChild("Start")
-                            if startButton then
-                                firesignal(startButton.MouseButton1Up)
-                            end
-                        end
-                    end
+                -- ✅ Skip Play button if already spawned
+                if hrp then
+                    print("HumanoidRootPart detected (not allowed time), skipping Play button.")
                 else
-                    warn("Play button GUI not found in 2 min (not allowed time), continuing macro anyway...")
+                    local loadMenu = Gui:WaitForChild("LoadMenu", 20)
+                    local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 20)
+                    local playButton = mainFrame and mainFrame:WaitForChild("Play", 20)
+
+                    if playButton then
+                        local startTime = os.clock()
+                        while (not playButton.Visible) and os.clock() - startTime < 30 do
+                            task.wait(1)
+                        end
+
+                        if playButton.Visible then
+                            for i = 1, 300 do
+                                for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
+                                    connection.Function()
+                                end
+                                task.wait(0.2)
+                            end
+
+                            task.wait(60)
+                            local button = player.PlayerGui.MainGui.MacroButtonF.SelectionF.Start.Title.ContentText
+
+                            if button == "START" then
+                                local trainingName = "Striking Power Training"
+                                if player.Name == "flextall1" or player.Name == "Rykujin" then
+                                    trainingName = "Strike Speed Training"
+                                end
+
+                                local butt = player.PlayerGui.MainGui.MacroButtonF.SelectionF.SF.Holder:FindFirstChild(trainingName)
+                                if butt then
+                                    firesignal(butt.MouseButton1Up)
+                                    equipAndActivate()
+                                end
+
+                                task.wait(2) 
+
+                                local startButton = player.PlayerGui.MainGui.MacroButtonF.SelectionF:FindFirstChild("Start")
+                                if startButton then
+                                    firesignal(startButton.MouseButton1Up)
+                                end
+                            end
+                        end
+                    else
+                        warn("Play button GUI not found in 2 min (not allowed time), continuing macro anyway...")
+                    end
                 end
             else
                 TeleportService:Teleport(4878988249, Players.LocalPlayer)
