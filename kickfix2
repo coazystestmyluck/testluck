@@ -1,0 +1,31 @@
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+local placeId = 4878988249
+
+-- Function to teleport with infinite retries until success
+local function teleportToPlace()
+    task.spawn(function()
+        while true do
+            local success, err = pcall(function()
+                TeleportService:Teleport(placeId, player)
+            end)
+            if success then
+                break -- stop once teleport succeeds
+            else
+                warn("Teleport failed, retrying... ", err)
+                task.wait(1) -- retry quickly
+            end
+        end
+    end)
+end
+
+-- Detect any prompt
+CoreGui.RobloxPromptGui.promptOverlay.ChildAdded:Connect(function(child)
+    print("Prompt detected:", child.Name) -- prints on ANY prompt
+    if child.Name == "ErrorPrompt" then
+        teleportToPlace()
+    end
+end)
