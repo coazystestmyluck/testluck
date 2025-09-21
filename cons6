@@ -3447,130 +3447,180 @@ local Players = game:GetService("Players")
 local VIM = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
 
+local Players = game:GetService("Players")
+local VIM = game:GetService("VirtualInputManager")
+
+local player = Players.LocalPlayer
+local plz = player.Name
+
 task.spawn(function()
-    -- Wait for the GUI parts to exist
-    local barF, bar
-    repeat
-        local gui = player.PlayerGui:WaitForChild("MainGui"):WaitForChild("Utility"):WaitForChild("PowerBar"):WaitForChild("BarF")
-        barF = gui
-        bar = gui:FindFirstChild("Bar")
-        task.wait(0.1)
-    until barF and bar and bar.AbsoluteSize.X > 0 and barF.AbsoluteSize.X > 0
+    local lastPower = nil
+    while true do
+        local success, currentPower = pcall(function()
+            return workspace.Live[plz].CurrentPower.Value
+        end)
 
-    local triggered = false
-    while not triggered do
-        local power = (bar.AbsoluteSize.X / barF.AbsoluteSize.X) * 100
-        if power >= 100 then
-            VIM:SendKeyEvent(true, "Y", false, game)
-            VIM:SendKeyEvent(false, "Y", false, game)
-                        VIM:SendKeyEvent(true, "T", false, game)
-            VIM:SendKeyEvent(false, "T", false, game)
+        if success then
+            if currentPower >= 98 then
+                -- First time entering this range, set baseline
+                if not lastPower then
+                    lastPower = currentPower
+                end
 
-            triggered = true
+                -- If power hasn’t changed, keep spamming
+                if currentPower == lastPower then
+                    -- Press Y
+                    VIM:SendKeyEvent(true, "Y", false, game)
+                    VIM:SendKeyEvent(false, "Y", false, game)
+
+                    -- Press T
+                    VIM:SendKeyEvent(true, "T", false, game)
+                    VIM:SendKeyEvent(false, "T", false, game)
+
+                    task.wait(4)
+
+                    -- Spam H
+                    for i = 1, 10 do
+                        VIM:SendKeyEvent(true, "H", false, game)
+                        task.wait(0.05)
+                    end
+                    VIM:SendKeyEvent(false, "H", false, game)
+
+                    task.wait(5) -- wait 5s before checking again
+                else
+                    -- Value changed → reset & stop spamming
+                    lastPower = nil
+                end
+            else
+                lastPower = nil
+                task.wait(0.1)
+            end
+        else
+            task.wait(0.5)
         end
-        task.wait(0.05)
     end
 end)
 
 
     local skillsOrder = {"Blast Core", "Hatsudou", "God Glow", "Soft Strike"} -- skills in order
+local zzz = conz:Toggle("Enable Auto-Hit", true, function(value)
+    local ministam = 20
+    local regentoamt = 100
+    local currentAutoHitID = tick()
+    getgenv().activeAutoHitID = currentAutoHitID
 
-    local zzz = conz:Toggle("Enable Auto-Hit", true, function(value)
-        local ministam = 20
-        local regentoamt = 100
-        local currentAutoHitID = tick()
-        getgenv().activeAutoHitID = currentAutoHitID
+    local function getStaminaPercent()
+        local plr = game.Players.LocalPlayer
+        if plr.Character and plr.Character:FindFirstChild("CurrentStamina") and plr.Character:FindFirstChild("MaxStamina") then
+            return (plr.Character.CurrentStamina.Value / plr.Character.MaxStamina.Value) * 100
+        end
+        return 0
+    end
 
-        local function getStaminaPercent()
-            local plr = game.Players.LocalPlayer
-            if plr.Character and plr.Character:FindFirstChild("CurrentStamina") and plr.Character:FindFirstChild("MaxStamina") then
-                return (plr.Character.CurrentStamina.Value / plr.Character.MaxStamina.Value) * 100
-            end
-            return 0
+    local skillIndex = 1
+    local currentcombo = nil
+
+    -- track combo progress
+    game.Players.LocalPlayer.Character.ChildAdded:Connect(function(v)
+        if v.Name == "Attacking" then
+            currentcombo = v.Value
+        end
+    end)
+
+    while value and getgenv().activeAutoHitID == currentAutoHitID do
+        local plr = game.Players.LocalPlayer
+        local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+        if not hum then
+            task.wait(0.1)
+            continue
         end
 
-        local skillIndex = 1
-
-        while value and getgenv().activeAutoHitID == currentAutoHitID do
-            local plr = game.Players.LocalPlayer
-            local hum = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
-            if not hum then
-                task.wait(0.1)
-                continue
-            end
-
-            -- 1) Punch 4 times
-            for i = 1, 4 do
-                local tool = equipTool()
-                if tool and tool.Parent == plr.Character then
-                    if getStaminaPercent() >= ministam and not hype and not safe and not invis then
-                        -- Unequip any skill tool before M1
-                        for _, t in pairs(plr.Character:GetChildren()) do
-                            if t:FindFirstChild("Skill") then
-                                hum:UnequipTools()
-                            end
-                        end
-                        tool:Activate()
-                    end
-                end
-                task.wait(0.1)
-            end
-
-            -- 2) Try current skill repeatedly until it goes on cooldown (safe loop)
-            local skillName = skillsOrder[skillIndex]
-            local tool, hotbar = GetSkillByName(skillName)
-            local retryTime = tick() + 10 -- fail-safe max 10 seconds retry
-            while tool and hotbar and hotbar:FindFirstChild("CD") and not hotbar.CD.Visible and tick() < retryTime do
-                if not hype and not safe and not invis then
-                    -- Unequip style tool before skill
+        -- 1) Punch 4 times
+        for i = 1, 4 do
+            local tool = equipTool()
+            if tool and tool.Parent == plr.Character then
+                if getStaminaPercent() >= ministam and not hype and not safe and not invis then
+                    -- Unequip any skill tool before M1
                     for _, t in pairs(plr.Character:GetChildren()) do
-                        if t:FindFirstChild("Style") then
+                        if t:FindFirstChild("Skill") then
                             hum:UnequipTools()
                         end
                     end
+                    tool:Activate()
+                end
+            end
+            task.wait(0.1)
+        end
 
-                    if tool.Parent == plr.Backpack then
-                        hum:EquipTool(tool)
-                        task.wait(0.5)
+        -- 🔹 ALWAYS M2 after combo 4 🔹
+        repeat
+            task.wait()
+            local StamPercent = getStaminaPercent()
+            if plr.Character:FindFirstChild("Attacking") and plr.Character.Attacking.Value == 5 then
+                break
+            end
+            local VIM = game:GetService("VirtualInputManager")
+            VIM:SendMouseButtonEvent(0, 500, 1, true, game, 1)
+            task.wait()
+            VIM:SendMouseButtonEvent(0, 500, 1, false, game, 1)
+        until (plr.Character:FindFirstChild("Attacking") and plr.Character.Attacking.Value == 5)
+            or getStaminaPercent() >= 90
+            or not value
+
+        task.wait(0.1)
+
+        -- 2) Try current skill repeatedly until it goes on cooldown (safe loop)
+        local skillName = skillsOrder[skillIndex]
+        local tool, hotbar = GetSkillByName(skillName)
+        local retryTime = tick() + 10
+        while tool and hotbar and hotbar:FindFirstChild("CD") and not hotbar.CD.Visible and tick() < retryTime do
+            if not hype and not safe and not invis then
+                for _, t in pairs(plr.Character:GetChildren()) do
+                    if t:FindFirstChild("Style") then
+                        hum:UnequipTools()
+                    end
+                end
+
+                if tool.Parent == plr.Backpack then
+                    hum:EquipTool(tool)
+                    task.wait(0.5)
+                end
+                tool:Activate()
+                task.wait(1)
+            end
+            task.wait(0.1)
+        end
+        hum:UnequipTools()
+
+        -- Move to next skill
+        skillIndex += 1
+        if skillIndex > #skillsOrder then
+            skillIndex = 1
+        end
+
+        -- 3) Punch freely for 5 seconds
+        local endFreePunch = tick() + 5
+        while tick() < endFreePunch do
+            local tool = equipTool()
+            if tool and tool.Parent == plr.Character then
+                if getStaminaPercent() >= ministam and not hype and not safe and not invis then
+                    for _, t in pairs(plr.Character:GetChildren()) do
+                        if t:FindFirstChild("Skill") then
+                            hum:UnequipTools()
+                        end
                     end
                     tool:Activate()
-                    task.wait(1)
                 end
-                task.wait(0.1) -- small wait to prevent freezing
             end
-            -- Unequip skill tool after use or timeout
-            hum:UnequipTools()
-
-            -- Move to next skill in order
-            skillIndex += 1
-            if skillIndex > #skillsOrder then
-                skillIndex = 1
-            end
-
-            -- 3) Punch freely for 5 seconds
-            local endFreePunch = tick() + 5
-            while tick() < endFreePunch do
-                local tool = equipTool()
-                if tool and tool.Parent == plr.Character then
-                    if getStaminaPercent() >= ministam and not hype and not safe and not invis then
-                        -- Unequip any skill tool before M1
-                        for _, t in pairs(plr.Character:GetChildren()) do
-                            if t:FindFirstChild("Skill") then
-                                hum:UnequipTools()
-                            end
-                        end
-                        tool:Activate()
-                    end
-                end
-                task.wait(0.1)
-            end
+            task.wait(0.1)
         end
+    end
 
-        -- Cleanup
-        if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
-            plr.Character:FindFirstChildOfClass("Humanoid"):UnequipTools()
-        end
-    end)
+    -- Cleanup
+    if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+        plr.Character:FindFirstChildOfClass("Humanoid"):UnequipTools()
+    end
+end)
 
 
     zzz.Name = "zzz"  -- Manually setting the name property
@@ -3864,6 +3914,8 @@ end)
         local ASisrunning = false
         local PFS = game:GetService("PathfindingService")
         local HRP = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+                task.wait(5)
+
         local pathStatus = Enum.PathStatus
         local player = game.Players.LocalPlayer
         local autobuyitem = true
