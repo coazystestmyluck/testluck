@@ -3456,9 +3456,7 @@ task.spawn(function()
     local lastPower = nil
     local stopSpamming = false
 
-    while true do
-        if stopSpamming then break end  -- Stop forever once power changes
-
+    while not stopSpamming do
         local success, currentPower = pcall(function()
             return workspace.Live[plz].CurrentPower.Value
         end)
@@ -3466,29 +3464,30 @@ task.spawn(function()
         if success then
             if currentPower >= 98 then
                 if lastPower == nil then
-                    lastPower = currentPower -- set baseline
+                    lastPower = currentPower
                 end
 
-                if currentPower == lastPower then
-                    -- Spam continuously while unchanged
-                    VIM:SendKeyEvent(true, "Y", false, game)
-                    VIM:SendKeyEvent(false, "Y", false, game)
-
-                    VIM:SendKeyEvent(true, "T", false, game)
-                    VIM:SendKeyEvent(false, "T", false, game)
-
-                    for i = 1, 10 do
-                        VIM:SendKeyEvent(true, "H", false, game)
-                        task.wait(0.05)
-                    end
-                    VIM:SendKeyEvent(false, "H", false, game)
-
-                    task.wait(5) -- wait before next spam
-                else
-                    -- Power changed → stop forever
+                -- If power changed, stop immediately BEFORE doing anything
+                if currentPower ~= lastPower then
                     stopSpamming = true
                     print("Power changed! Stopping spam forever.")
+                    break -- exits loop immediately
                 end
+
+                -- Only spam while power is exactly the same
+                VIM:SendKeyEvent(true, "Y", false, game)
+                VIM:SendKeyEvent(false, "Y", false, game)
+
+                VIM:SendKeyEvent(true, "T", false, game)
+                VIM:SendKeyEvent(false, "T", false, game)
+
+                for i = 1, 10 do
+                    VIM:SendKeyEvent(true, "H", false, game)
+                    task.wait(0.05)
+                end
+                VIM:SendKeyEvent(false, "H", false, game)
+
+                task.wait(5)
             end
         end
 
