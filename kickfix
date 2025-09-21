@@ -217,9 +217,9 @@ task.spawn(function()
         else
             -- ================= NOT ALLOWED ACTIONS =================
             if game.PlaceId == 4878988249 then
-                local loadMenu = Gui:WaitForChild("LoadMenu", 120)
-                local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 120)
-                local playButton = mainFrame and mainFrame:WaitForChild("Play", 120)
+                local loadMenu = Gui:WaitForChild("LoadMenu", 20)
+                local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 20)
+                local playButton = mainFrame and mainFrame:WaitForChild("Play", 20)
 
                 if playButton then
                     local startTime = os.clock()
