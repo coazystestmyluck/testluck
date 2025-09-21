@@ -3453,21 +3453,28 @@ local VIM = game:GetService("VirtualInputManager")
 local player = Players.LocalPlayer
 local plz = player.Name
 task.spawn(function()
-    local hasSpammed = false
-    local initialPower = nil
+    local lastPower = nil
     local stopSpamming = false
 
-    while true do
-        if stopSpamming then break end  -- Stop forever
-
+    while not stopSpamming do
         local success, currentPower = pcall(function()
             return workspace.Live[plz].CurrentPower.Value
         end)
 
         if success then
-            -- Only spam the first time power hits >=98
-            if currentPower >= 98 and not hasSpammed then
-                -- Spam Y/T/H
+            if currentPower >= 98 then
+                if lastPower == nil then
+                    lastPower = currentPower -- set baseline
+                end
+
+                -- If power changed, stop forever
+                if currentPower ~= lastPower then
+                    stopSpamming = true
+                    print("Power changed! Stopping spam forever.")
+                    break
+                end
+
+                -- Spam while power is unchanged
                 VIM:SendKeyEvent(true, "Y", false, game)
                 VIM:SendKeyEvent(false, "Y", false, game)
 
@@ -3480,20 +3487,14 @@ task.spawn(function()
                 end
                 VIM:SendKeyEvent(false, "H", false, game)
 
-                hasSpammed = true
-                initialPower = currentPower
-                print("Spammed once, now watching for changes.")
+                task.wait(5) -- wait a bit before next spam
+            else
+                -- Below 98 → just wait
+                task.wait(0.1)
             end
-
-            -- If power changes at all AFTER spam, stop forever
-            if hasSpammed and currentPower ~= initialPower then
-                stopSpamming = true
-                print("Power changed after spam. Stopping forever.")
-                break
-            end
+        else
+            task.wait(0.5)
         end
-
-        task.wait(0.1)
     end
 end)
 
