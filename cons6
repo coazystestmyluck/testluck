@@ -3499,7 +3499,7 @@ task.spawn(function()
 end)
 
 
-    local skillsOrder = {"Blast Core", "Hatsudou", "God Glow", "Soft Strike"} -- skills in order
+    local skillsOrder = {"Blast Core", "Hatsudou", "God Glow", "Razor Blitz", "Soft Strike"} -- skills in order
 
     local zzz = conz:Toggle("Enable Auto-Hit", true, function(value)
         local ministam = 20
