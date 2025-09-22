@@ -3498,19 +3498,31 @@ task.spawn(function()
     end
 end)
 
--- Function to spam H forever
+-- Function to spam H forever once power >= 98
 local function spamH()
     task.spawn(function()
         while true do
-            VIM:SendKeyEvent(true, "H", false, game)
-            task.wait(0.05)
-            VIM:SendKeyEvent(false, "H", false, game)
+            local success, currentPower = pcall(function()
+                return workspace.Live[plz].CurrentPower.Value
+            end)
+
+            if success and currentPower >= 98 then
+                -- Once power >= 98, start spamming H forever
+                while true do
+                    VIM:SendKeyEvent(true, "H", false, game)
+                    task.wait(0.05)
+                    VIM:SendKeyEvent(false, "H", false, game)
+                end
+            else
+                task.wait(0.1) -- keep checking until 98
+            end
         end
     end)
 end
 
--- Call it once to start spamming H
+-- Start the H spam function
 spamH()
+
 
     local skillsOrder = {"Blast Core", "Hatsudou", "God Glow", "Soft Strike"} -- skills in order
 
