@@ -4,13 +4,11 @@ local Gui = Players.LocalPlayer.PlayerGui
 
 -- ================= EQUIP FUNCTION =================
 local function equipAndActivate()
-    -- Equip Limb Weights
-    local limbWeights = game.Players.LocalPlayer.Backpack:FindFirstChild("Limb Weights")
+    local limbWeights = Players.LocalPlayer.Backpack:FindFirstChild("Limb Weights")
     if limbWeights then
-        limbWeights.Parent = game.Players.LocalPlayer.Character
+        limbWeights.Parent = Players.LocalPlayer.Character
         limbWeights:Activate()
-        -- Unequip after activation
-        limbWeights.Parent = game.Players.LocalPlayer.Backpack
+        limbWeights.Parent = Players.LocalPlayer.Backpack
     end
 end
 
@@ -23,18 +21,12 @@ local function getEST()
 end
 
 local allowedHours = {
-    [1] = true,   -- 1 AM
-    [8] = true,   -- 8 AM
-    [13] = true,  -- 1 PM
-    [19] = true,  -- 7 PM
+    [1] = true, [8] = true, [13] = true, [19] = true,
 }
 
 local function inAllowedWindow()
     local h,m,s = getEST()
-    if allowedHours[h] and ((m > 0) or (m == 0 and s >= 10)) and ((m < 59) or (m == 59 and s <= 10)) then
-        return true
-    end
-    return false
+    return allowedHours[h] and ((m > 0) or (m == 0 and s >= 10)) and ((m < 59) or (m == 59 and s <= 10))
 end
 
 local function getNextAllowed()
@@ -44,9 +36,7 @@ local function getNextAllowed()
     local nextHour = nil
     for hour in pairs(allowedHours) do
         local targetSecs = hour*3600 + 10
-        if targetSecs <= curSecs then
-            targetSecs = targetSecs + 86400
-        end
+        if targetSecs <= curSecs then targetSecs = targetSecs + 86400 end
         local diff = targetSecs - curSecs
         if diff < soonestDiff then
             soonestDiff = diff
@@ -68,7 +58,7 @@ task.delay(1, function()
     if not inAllowedWindow() then
         local h,m,s = getEST()
         local nextH, diff = getNextAllowed()
-        print("Not allowed time. Current EST: "..to12Hour(h, m, s)..". Next allowed: "..to12Hour(nextH, 0, 10).." ("..diff.."s away)")
+        print("Not allowed time. Current EST: "..to12Hour(h,m,s)..". Next allowed: "..to12Hour(nextH,0,10).." ("..diff.."s away)")
     end
 end)
 
@@ -97,41 +87,6 @@ local function fireUpgradeClick(upgradeName)
     end
 end
 
-local function triggerPlayButtonAndUpgrade()
-    local player = Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-
-    -- ✅ Skip if character is already loaded
-    if hrp then
-        print("HumanoidRootPart detected, skipping Play button wait.")
-        fireUpgradeClick("cons")
-        return
-    end
-
-    local loadMenu = Gui:WaitForChild("LoadMenu", 120)
-    local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 120)
-    local playButton = mainFrame and mainFrame:WaitForChild("Play", 120)
-
-    if playButton then
-        local startTime = os.clock()
-        while (not playButton.Visible) and os.clock() - startTime < 30 do
-            task.wait(1)
-        end
-        if playButton.Visible then
-            task.wait(10)
-            for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
-                connection.Function()
-            end
-            task.wait(10)
-        end
-    else
-        warn("Play button GUI not found within 2 min, continuing anyway...")
-    end
-
-    fireUpgradeClick("cons")
-end
-
 local function clickChoiceA()
     local dialogueGui = Gui:FindFirstChild("DialogueGUI")
     local dialogueT = dialogueGui and dialogueGui:FindFirstChild("DialogueT")
@@ -149,15 +104,9 @@ local function triggerReplayButton()
     local button = Gui:FindFirstChild("ContractGUI")
     if button then
         button = button:FindFirstChild("Selection")
-        if button then
-            button = button:FindFirstChild("SF")
-            if button then
-                button = button:FindFirstChild("Holder")
-                if button then
-                    button = button:FindFirstChild("Kyokushin Dojo Three")
-                end
-            end
-        end
+        button = button and button:FindFirstChild("SF")
+        button = button and button:FindFirstChild("Holder")
+        button = button and button:FindFirstChild("Kyokushin Dojo Three")
     end
     if button and button.Visible and not buttonClicked then
         for _, connection in ipairs(getconnections(button.MouseButton1Click)) do
@@ -190,6 +139,32 @@ local function zstart()
     end
 end
 
+-- ================= PLAY BUTTON SPAM FUNCTION =================
+local function waitForPlayButton()
+    local player = Players.LocalPlayer
+    local hrpExists = false
+    local loadMenu = Gui:WaitForChild("LoadMenu")
+    local mainFrame = loadMenu:WaitForChild("MainFrame")
+    local playButton = mainFrame:WaitForChild("Play")
+
+    while not hrpExists do
+        local character = player.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrpExists = true
+            print("HumanoidRootPart detected, stopping Play button clicks.")
+            break
+        end
+        if playButton then
+            for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
+                connection.Function()
+            end
+            print("Clicked Play button.")
+        end
+        task.wait(0.5)
+    end
+end
+
 -- ================= LOOP =================
 task.spawn(function()
     while true do
@@ -217,67 +192,41 @@ task.spawn(function()
                 end
             end)
 
-            task.wait(5)
-            triggerPlayButtonAndUpgrade()
+            -- ✅ Wait for Play button only if HRP doesn't exist
+            waitForPlayButton()
+            fireUpgradeClick("cons")
             task.wait(2)
             clickChoiceA()
             task.wait(2)
             clickChoiceA()
             zstart()
         else
-            -- ================= NOT ALLOWED ACTIONS =================
+            -- NOT ALLOWED TIME
             if game.PlaceId == 4878988249 then
+                -- Wait and spam Play button until HRP exists
+                waitForPlayButton()
+                
+                -- After HRP exists, proceed with macro
                 local player = Players.LocalPlayer
-                local character = player.Character or player.CharacterAdded:Wait()
-                local hrp = character:FindFirstChild("HumanoidRootPart")
+                task.wait(60) -- wait before checking macro button
+                local button = player.PlayerGui.MainGui.MacroButtonF.SelectionF.Start.Title.ContentText
 
-                -- ✅ Skip Play button if already spawned
-                if hrp then
-                    print("HumanoidRootPart detected (not allowed time), skipping Play button.")
-                else
-                    local loadMenu = Gui:WaitForChild("LoadMenu", 20)
-                    local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 20)
-                    local playButton = mainFrame and mainFrame:WaitForChild("Play", 20)
+                if button == "START" then
+                    local trainingName = "Striking Power Training"
+                    if player.Name == "flextall1" or player.Name == "Rykujin" then
+                        trainingName = "Strike Speed Training"
+                    end
 
-                    if playButton then
-                        local startTime = os.clock()
-                        while (not playButton.Visible) and os.clock() - startTime < 30 do
-                            task.wait(1)
-                        end
+                    local butt = player.PlayerGui.MainGui.MacroButtonF.SelectionF.SF.Holder:FindFirstChild(trainingName)
+                    if butt then
+                        firesignal(butt.MouseButton1Up)
+                        equipAndActivate()
+                    end
 
-                        if playButton.Visible then
-                            for i = 1, 300 do
-                                for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
-                                    connection.Function()
-                                end
-                                task.wait(0.2)
-                            end
-
-                            task.wait(60)
-                            local button = player.PlayerGui.MainGui.MacroButtonF.SelectionF.Start.Title.ContentText
-
-                            if button == "START" then
-                                local trainingName = "Striking Power Training"
-                                if player.Name == "flextall1" or player.Name == "Rykujin" then
-                                    trainingName = "Strike Speed Training"
-                                end
-
-                                local butt = player.PlayerGui.MainGui.MacroButtonF.SelectionF.SF.Holder:FindFirstChild(trainingName)
-                                if butt then
-                                    firesignal(butt.MouseButton1Up)
-                                    equipAndActivate()
-                                end
-
-                                task.wait(2) 
-
-                                local startButton = player.PlayerGui.MainGui.MacroButtonF.SelectionF:FindFirstChild("Start")
-                                if startButton then
-                                    firesignal(startButton.MouseButton1Up)
-                                end
-                            end
-                        end
-                    else
-                        warn("Play button GUI not found in 2 min (not allowed time), continuing macro anyway...")
+                    task.wait(2)
+                    local startButton = player.PlayerGui.MainGui.MacroButtonF.SelectionF:FindFirstChild("Start")
+                    if startButton then
+                        firesignal(startButton.MouseButton1Up)
                     end
                 end
             else
