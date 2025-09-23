@@ -1,6 +1,24 @@
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local Gui = Players.LocalPlayer.PlayerGui
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer
+
+task.spawn(function()
+    local gui = player:WaitForChild("PlayerGui")
+    local mainGui = gui:WaitForChild("MainGui")
+    local utility = mainGui:WaitForChild("Utility")
+    local combatTag = utility:WaitForChild("CombatTag")
+
+    while true do
+        if combatTag.Visible then
+            repeat task.wait() until not combatTag.Visible
+            TeleportService:Teleport(4878988249, player)
+        end
+        task.wait(1)
+    end
+end)
 
 -- ================= EQUIP FUNCTION =================
 local function equipAndActivate()
