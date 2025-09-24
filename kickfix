@@ -5,18 +5,65 @@ local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local player = Players.LocalPlayer
 
-task.spawn(function()
-    local gui = player:WaitForChild("PlayerGui")
-    local mainGui = gui:WaitForChild("MainGui")
-    local utility = mainGui:WaitForChild("Utility")
-    local combatTag = utility:WaitForChild("CombatTag")
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer
+local placeId = 4878988249
 
-    while true do
-        if combatTag.Visible then
-            repeat task.wait() until not combatTag.Visible
-            TeleportService:Teleport(4878988249, player)
-        end
-        task.wait(1)
+-- Create or get persistent BoolValue
+local combatStatus = player:FindFirstChild("CombatStatus")
+if not combatStatus then
+    combatStatus = Instance.new("BoolValue")
+    combatStatus.Name = "CombatStatus"
+    combatStatus.Value = false
+    combatStatus.Parent = player
+    print("[CombatTracker] Created persistent BoolValue")
+end
+
+local function watchCombatTag()
+    task.spawn(function()
+        local gui = player:WaitForChild("PlayerGui")
+        local mainGui = gui:WaitForChild("MainGui")
+        local utility = mainGui:WaitForChild("Utility")
+        local combatTag = utility:WaitForChild("CombatTag")
+        print("[CombatTracker] CombatTag found, starting watcher")
+
+        combatTag:GetPropertyChangedSignal("Visible"):Connect(function()
+            print("[CombatTracker] CombatTag.Visible changed:", combatTag.Visible)
+            if combatTag.Visible then
+                combatStatus.Value = true
+                print("[CombatTracker] Entered combat")
+            else
+                print("[CombatTracker] CombatTag disappeared, waiting 3s")
+                task.wait(3)
+                if combatTag and not combatTag.Visible then
+                    combatStatus.Value = false
+                    print("[CombatTracker] Left combat, teleporting now")
+                    TeleportService:Teleport(placeId, player)
+                else
+                    print("[CombatTracker] CombatTag came back, cancel teleport")
+                end
+            end
+        end)
+    end)
+end
+
+-- Initial watcher
+watchCombatTag()
+
+-- Handle respawn
+player.CharacterAdded:Connect(function()
+    print("[CombatTracker] Character respawned, re-hooking CombatTag")
+    task.wait(1) -- wait for GUI to load
+    watchCombatTag()
+
+    if combatStatus.Value then
+        combatStatus.Value = false -- reset
+        print("[CombatTracker] Was in combat before death, teleporting now")
+        task.wait(5) -- let HRP load
+        TeleportService:Teleport(placeId, player)
+    else
+        print("[CombatTracker] No combat before death, nothing to do")
     end
 end)
 
