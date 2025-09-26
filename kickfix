@@ -7,17 +7,67 @@ local player = Players.LocalPlayer
 
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
+
 local player = Players.LocalPlayer
 local placeId = 4878988249
 
--- Create or get persistent BoolValue
+local wasTagged = false
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+local placeId = 4878988249
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer
+local placeId = 4878988249
+-- ================= SERVICES =================
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+local Gui = player.PlayerGui
+local placeId = 4878988249
+
+-- ================= SERVER HOP FUNCTION =================
+local function getDifferentServer()
+    local servers = {}
+    local req = game:HttpGet(
+        ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100")
+        :format(placeId)
+    )
+    local data = HttpService:JSONDecode(req)
+    for _,server in ipairs(data.data) do
+        if server.playing < server.maxPlayers and server.id ~= game.JobId then
+            table.insert(servers, server.id)
+        end
+    end
+    if #servers > 0 then
+        return servers[math.random(1,#servers)]
+    end
+    return nil
+end
+
+local function teleportDifferentServer()
+    local serverId = getDifferentServer()
+    if serverId then
+        TeleportService:TeleportToPlaceInstance(placeId, serverId, player)
+    else
+        warn("No different server found, defaulting to normal teleport")
+        TeleportService:Teleport(placeId, player)
+    end
+end
+
+-- ================= COMBAT TRACKER =================
 local combatStatus = player:FindFirstChild("CombatStatus")
 if not combatStatus then
     combatStatus = Instance.new("BoolValue")
     combatStatus.Name = "CombatStatus"
     combatStatus.Value = false
     combatStatus.Parent = player
-    print("[CombatTracker] Created persistent BoolValue")
 end
 
 local function watchCombatTag()
@@ -26,46 +76,34 @@ local function watchCombatTag()
         local mainGui = gui:WaitForChild("MainGui")
         local utility = mainGui:WaitForChild("Utility")
         local combatTag = utility:WaitForChild("CombatTag")
-        print("[CombatTracker] CombatTag found, starting watcher")
 
         combatTag:GetPropertyChangedSignal("Visible"):Connect(function()
-            print("[CombatTracker] CombatTag.Visible changed:", combatTag.Visible)
             if combatTag.Visible then
                 combatStatus.Value = true
-                print("[CombatTracker] Entered combat")
             else
-                print("[CombatTracker] CombatTag disappeared, waiting 3s")
                 task.wait(3)
                 if combatTag and not combatTag.Visible then
                     combatStatus.Value = false
-                    print("[CombatTracker] Left combat, teleporting now")
-                    TeleportService:Teleport(placeId, player)
-                else
-                    print("[CombatTracker] CombatTag came back, cancel teleport")
+                    teleportDifferentServer()
                 end
             end
         end)
     end)
 end
 
--- Initial watcher
 watchCombatTag()
 
--- Handle respawn
 player.CharacterAdded:Connect(function()
-    print("[CombatTracker] Character respawned, re-hooking CombatTag")
-    task.wait(1) -- wait for GUI to load
+    task.wait(1)
     watchCombatTag()
 
     if combatStatus.Value then
-        combatStatus.Value = false -- reset
-        print("[CombatTracker] Was in combat before death, teleporting now")
-        task.wait(5) -- let HRP load
-        TeleportService:Teleport(placeId, player)
-    else
-        print("[CombatTracker] No combat before death, nothing to do")
+        combatStatus.Value = false
+        task.wait(5)
+        teleportDifferentServer()
     end
 end)
+
 
 -- ================= EQUIP FUNCTION =================
 local function equipAndActivate()
@@ -308,7 +346,7 @@ task.spawn(function()
                         if button == "START" then
                             -- username-based choice
                             local trainingName = "Striking Power Training"
-                            if player.Name == "nnzzaa" or player.Name == "Rykujin" then
+                            if player.Name == "nzz" or player.Name == "Rykujin" then
                                 trainingName = "Strike Speed Training"
                             end
 
