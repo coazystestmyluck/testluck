@@ -41,7 +41,7 @@ local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 local placeId = 4878988249
-local watchUserId = 1122497870 -- SomalianPirateMamhod
+local watchUserId = 1122497870, 2426926207 -- SomalianPirateMamhod
 
 -- ================= SERVER HOP FUNCTION =================
 local function getDifferentServer()
