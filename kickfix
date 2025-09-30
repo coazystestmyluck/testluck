@@ -39,9 +39,13 @@ local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
 local player = Players.LocalPlayer
 local placeId = 4878988249
-local watchUserId = 1122497870, 2426926207 -- SomalianPirateMamhod
+local watchUserIds = {1122497870, 2426926207} -- multiple IDs
 
 -- ================= SERVER HOP FUNCTION =================
 local function getDifferentServer()
@@ -52,19 +56,16 @@ local function getDifferentServer()
     )
     local data = HttpService:JSONDecode(req)
 
-    -- Collect servers that aren't full and aren't the current server
     for _, server in ipairs(data.data) do
         if server.playing < server.maxPlayers and server.id ~= game.JobId then
             table.insert(servers, server)
         end
     end
 
-    -- Sort by ascending player count
     table.sort(servers, function(a, b)
         return a.playing < b.playing
     end)
 
-    -- Skip the lowest 3 servers
     local availableServers = {}
     for i = 4, #servers do
         table.insert(availableServers, servers[i].id)
@@ -85,6 +86,30 @@ local function teleportDifferentServer()
         TeleportService:Teleport(placeId, player)
     end
 end
+
+-- ================= CHECK FOR WATCHED USERS =================
+local function checkForWatchedPlayers()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        for _, id in ipairs(watchUserIds) do
+            if plr.UserId == id then
+                print("Watched user found:", plr.Name, " — hopping servers...")
+                teleportDifferentServer()
+                return
+            end
+        end
+    end
+end
+
+-- run check when you join + whenever new players join
+checkForWatchedPlayers()
+Players.PlayerAdded:Connect(function(plr)
+    for _, id in ipairs(watchUserIds) do
+        if plr.UserId == id then
+            print("Watched user joined:", plr.Name, " — hopping servers...")
+            teleportDifferentServer()
+        end
+    end
+end)
 
 -- ================= CONTINUOUS WATCHDOG =================
 task.spawn(function()
