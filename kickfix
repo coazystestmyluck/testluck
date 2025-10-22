@@ -429,7 +429,7 @@ task.spawn(function()
                         if button == "START" then
                             -- username-based choice
                             local trainingName = "Striking Power Training"
-                            if player.Name == "nzz" or player.Name == "Rykujin" then
+                            if player.Name == "nzz" or player.Name == "aplayername" then
                                 trainingName = "Strike Speed Training"
                             end
 
