@@ -1,5 +1,7 @@
 print("loadstring went thru?!")
 loadstring(game:HttpGet("https://raw.githubusercontent.com/coazystestmyluck/testluck/refs/heads/main/gravekick"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/coazystestmyluck/testluck/refs/heads/main/kickfix2"))()
+
 game.Players.LocalPlayer.Idled:Connect(function()
         game:GetService("VirtualUser"):CaptureController()
         game:GetService("VirtualUser"):ClickButton2(Vector2.new(0,0))
