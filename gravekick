@@ -1,0 +1,459 @@
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local Gui = Players.LocalPlayer.PlayerGui
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+local placeId = 4878988249
+
+local wasTagged = false
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+local placeId = 4878988249
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local player = Players.LocalPlayer
+local placeId = 4878988249
+-- ================= SERVICES =================
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+local Gui = player.PlayerGui
+local placeId = 4878988249
+-- ================= SERVICES =================
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+local player = Players.LocalPlayer
+local placeId = 4878988249
+local watchUserIds = {1122497870, 1260017651, 2051973876, 2701287702, 4423346709, 65880759, 145352839, 1167771421, 72437045, 1133542094, 1123278049, 145352839, 2506087998, 101765110, 2457015276, 2587489436, 916449953, 1167715039, 4988683023, 4979556404, 4986150339, 916449953, 1123512985, 1123512295, 1026077894, 998146523, 449595070, 4556788847, 4601897178, 31939148, 813629338, 24073, 2344654669, 1464780145, 131125505, 8080229898, 2725287985, 51946841, 123889415, 1392679705, 915197933, 31590121, 23640600, 305329340, 899723341, 50599889, 181961271, 72534689, 37035643, 70520757, 2823114060, 295654018, 31939148, 89162755, 88651611, 2225006513, 97581585, 3443304647, 3568774849, 3270700386, 2239935027, 174958970, 4749575356, 1523977842, 339277087, 88847524, 37188060, 4018211035, 1964390454, 2010706877, 999546209, 3514137348, 4348490013, 1766399781, 1087214929, 2554234236, 679917480, 3514137348, 1155702627, 501869653, 362631509, 491534331, 1882875605, 4523435761, 963655438, 36223279, 545808469, 1746356188, 8671600685, 5716250694, 3592243438, 1818744527, 2409956710, 4751118218, 962377350, 1554951190, 543412624, 299396309, 78095941, 1369942933, 1568429694, 1448553203, 503923406, 5842983055, 3554759349, 996049978, 1643988, 1588583904}
+
+-- ================= SERVER HOP FUNCTION =================
+local function getDifferentServer()
+    local servers = {}
+    local req = game:HttpGet(
+        ("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100")
+        :format(placeId)
+    )
+    local data = HttpService:JSONDecode(req)
+
+    for _, server in ipairs(data.data) do
+        if server.playing < server.maxPlayers and server.id ~= game.JobId then
+            table.insert(servers, server)
+        end
+    end
+
+    table.sort(servers, function(a, b)
+        return a.playing < b.playing
+    end)
+
+    local availableServers = {}
+    for i = 4, #servers do
+        table.insert(availableServers, servers[i].id)
+    end
+
+    if #availableServers > 0 then
+        return availableServers[math.random(1, #availableServers)]
+    end
+    return nil
+end
+
+local function teleportDifferentServer()
+    local serverId = getDifferentServer()
+    if serverId then
+        TeleportService:TeleportToPlaceInstance(placeId, serverId, player)
+    else
+        warn("No different server found, defaulting to normal teleport")
+        TeleportService:Teleport(placeId, player)
+    end
+end
+
+-- ================= CHECK FOR WATCHED USERS =================
+local function checkForWatchedPlayers()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        for _, id in ipairs(watchUserIds) do
+            if plr.UserId == id then
+                print("Watched user found:", plr.Name, " — hopping servers...")
+                teleportDifferentServer()
+                return
+            end
+        end
+    end
+end
+
+-- run check when you join + whenever new players join
+checkForWatchedPlayers()
+Players.PlayerAdded:Connect(function(plr)
+    for _, id in ipairs(watchUserIds) do
+        if plr.UserId == id then
+            print("Watched user joined:", plr.Name, " — hopping servers...")
+            teleportDifferentServer()
+        end
+    end
+end)
+
+-- ================= CONTINUOUS WATCHDOG =================
+task.spawn(function()
+    while true do
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p.UserId == watchUserId then
+                warn("Target player detected! Server hopping...")
+                teleportDifferentServer()
+                task.wait(5) -- wait a bit before checking again after hop
+                break
+            end
+        end
+        task.wait(1) -- check every second
+    end
+end)
+
+-- Also catch players joining in real-time
+Players.PlayerAdded:Connect(function(p)
+    if p.UserId == watchUserId then
+        warn("Target player joined! Server hopping...")
+        teleportDifferentServer()
+    end
+end)
+
+
+-- ================= COMBAT TRACKER =================
+local combatStatus = player:FindFirstChild("CombatStatus")
+if not combatStatus then
+    combatStatus = Instance.new("BoolValue")
+    combatStatus.Name = "CombatStatus"
+    combatStatus.Value = false
+    combatStatus.Parent = player
+end
+
+local function watchCombatTag()
+    task.spawn(function()
+        local gui = player:WaitForChild("PlayerGui")
+        local mainGui = gui:WaitForChild("MainGui")
+        local utility = mainGui:WaitForChild("Utility")
+        local combatTag = utility:WaitForChild("CombatTag")
+
+        combatTag:GetPropertyChangedSignal("Visible"):Connect(function()
+            if combatTag.Visible then
+                combatStatus.Value = true
+            else
+                task.wait(3)
+                if combatTag and not combatTag.Visible then
+                    combatStatus.Value = false
+                    teleportDifferentServer()
+                end
+            end
+        end)
+    end)
+end
+
+watchCombatTag()
+
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    watchCombatTag()
+
+    if combatStatus.Value then
+        combatStatus.Value = false
+        task.wait(5)
+        teleportDifferentServer()
+    end
+end)
+
+-- ================= PLAYER JOIN DETECTOR =================
+Players.PlayerAdded:Connect(function(p)
+    if p.UserId == watchUserId then
+        warn("Target player joined! Server hopping...")
+        task.wait(1)
+        teleportDifferentServer()
+    end
+end)
+
+
+-- ================= EQUIP FUNCTION =================
+local function equipAndActivate()
+    -- Equip Limb Weights
+    local limbWeights = game.Players.LocalPlayer.Backpack:FindFirstChild("Limb Weights")
+    if limbWeights then
+        limbWeights.Parent = game.Players.LocalPlayer.Character
+        limbWeights:Activate()
+        -- Unequip after activation
+        limbWeights.Parent = game.Players.LocalPlayer.Backpack
+    end
+end
+
+-- ================= TIME CONTROL =================
+local function getEST()
+    local utc = os.date("!*t")
+    local estOffset = -4
+    local estHour = (utc.hour + estOffset) % 24
+    return estHour, utc.min, utc.sec
+end
+
+local allowedHours = {
+    [1] = true,   -- 1 AM
+    [8] = true,   -- 8 AM
+    [13] = true,  -- 1 PM
+    [19] = true,  -- 7 PM
+}
+
+local function inAllowedWindow()
+    local h,m,s = getEST()
+    if allowedHours[h] and ((m > 0) or (m == 0 and s >= 10)) and ((m < 59) or (m == 59 and s <= 10)) then
+        return true
+    end
+    return false
+end
+
+local function getNextAllowed()
+    local h,m,s = getEST()
+    local curSecs = h*3600 + m*60 + s
+    local soonestDiff = math.huge
+    local nextHour = nil
+    for hour in pairs(allowedHours) do
+        local targetSecs = hour*3600 + 10
+        if targetSecs <= curSecs then
+            targetSecs = targetSecs + 86400
+        end
+        local diff = targetSecs - curSecs
+        if diff < soonestDiff then
+            soonestDiff = diff
+            nextHour = hour
+        end
+    end
+    return nextHour, soonestDiff
+end
+
+local function to12Hour(h, m, s)
+    local suffix = "AM"
+    if h >= 12 then suffix = "PM" end
+    local hour12 = h % 12
+    if hour12 == 0 then hour12 = 12 end
+    return string.format("%d:%02d:%02d %s", hour12, m, s, suffix)
+end
+
+task.delay(1, function()
+    if not inAllowedWindow() then
+        local h,m,s = getEST()
+        local nextH, diff = getNextAllowed()
+        print("Not allowed time. Current EST: "..to12Hour(h, m, s)..". Next allowed: "..to12Hour(nextH, 0, 10).." ("..diff.."s away)")
+    end
+end)
+
+-- ================= SCRIPT ACTIONS =================
+local upgradePositions = {
+    karate = CFrame.new(-582.616455, 49.399929, -584.535034),
+    muayThai = CFrame.new(891.39679, 28.1500301, 21.1374512),
+    kungFu = CFrame.new(-1106.40442, 47.7230835, 129.619614),
+    cons = CFrame.new(-2185.30005, -79.1400757, 269.199982),
+}
+
+local function fireUpgradeClick(upgradeName)
+    local position = upgradePositions[upgradeName]
+    if not position then return end
+    for _, obj in pairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Position - position.Position).Magnitude < 5 then
+            local parent = obj.Parent
+            if parent then
+                local clickDetector = parent:FindFirstChild("ClickDetector")
+                if clickDetector then
+                    fireclickdetector(clickDetector)
+                    return
+                end
+            end
+        end
+    end
+end
+
+local function triggerPlayButtonAndUpgrade()
+    local loadMenu = Gui:WaitForChild("LoadMenu", 120)
+    local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 120)
+    local playButton = mainFrame and mainFrame:WaitForChild("Play", 120)
+
+    if playButton then
+        local startTime = os.clock()
+        while (not playButton.Visible) and os.clock() - startTime < 30 do
+            task.wait(1)
+        end
+        if playButton.Visible then
+            task.wait(10)
+            for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
+                connection.Function()
+            end
+            task.wait(10)
+        end
+    else
+        warn("Play button GUI not found within 2 min, continuing anyway...")
+    end
+
+    -- Always continue with upgrades
+    fireUpgradeClick("cons")
+end
+
+local function clickChoiceA()
+    local dialogueGui = Gui:FindFirstChild("DialogueGUI")
+    local dialogueT = dialogueGui and dialogueGui:FindFirstChild("DialogueT")
+    local choiceFrame = dialogueT and dialogueT:FindFirstChild("Choice")
+    local choiceButton = choiceFrame and choiceFrame:FindFirstChild("a")
+    if choiceButton and choiceButton.Visible then
+        for _, connection in ipairs(getconnections(choiceButton.MouseButton1Click)) do
+            connection.Function()
+        end
+    end
+end
+
+local buttonClicked = false
+local function triggerReplayButton()
+    local button = Gui:FindFirstChild("ContractGUI")
+    if button then
+        button = button:FindFirstChild("Selection")
+        if button then
+            button = button:FindFirstChild("SF")
+            if button then
+                button = button:FindFirstChild("Holder")
+                if button then
+                    button = button:FindFirstChild("Spooky Grave")
+                end
+            end
+        end
+    end
+    if button and button.Visible and not buttonClicked then
+        for _, connection in ipairs(getconnections(button.MouseButton1Click)) do
+            connection.Function()
+        end
+        buttonClicked = true
+    end
+end
+
+local function z()
+    local button = Gui:FindFirstChild("ContractGUI")
+    button = button and button:FindFirstChild("Selection")
+    button = button and button:FindFirstChild("Select")
+    if button and button.Visible then
+        for _, connection in ipairs(getconnections(button.MouseButton1Click)) do
+            connection.Function()
+        end
+    end
+end
+
+local function zstart()
+    local button = Gui:FindFirstChild("ContractGUI")
+    button = button and button:FindFirstChild("Main")
+    button = button and button:FindFirstChild("Raid")
+    button = button and button:FindFirstChild("Start")
+    if button and button.Visible then
+        for _, connection in ipairs(getconnections(button.MouseButton1Click)) do
+            connection.Function()
+        end
+    end
+end
+
+-- ================= LOOP =================
+task.spawn(function()
+    while true do
+        if inAllowedWindow() then
+            print("Allowed time window, executing script...")
+
+            spawn(function()
+                while inAllowedWindow() do
+                    triggerReplayButton()
+                    task.wait(1)
+                end
+            end)
+
+            spawn(function()
+                while inAllowedWindow() do
+                    z()
+                    task.wait(1)
+                end
+            end)
+
+            spawn(function()
+                while inAllowedWindow() do
+                    zstart()
+                    task.wait(1)
+                end
+            end)
+
+            task.wait(5)
+            triggerPlayButtonAndUpgrade()
+            task.wait(2)
+            clickChoiceA()
+            task.wait(2)
+            clickChoiceA()
+            zstart()
+        else
+            -- ================= NOT ALLOWED ACTIONS =================
+            if game.PlaceId == 4878988249 then
+                local loadMenu = Gui:WaitForChild("LoadMenu", 20)
+                local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 20)
+                local playButton = mainFrame and mainFrame:WaitForChild("Play", 20)
+
+                if playButton then
+                    local startTime = os.clock()
+                    while (not playButton.Visible) and os.clock() - startTime < 30 do
+                        task.wait(1)
+                    end
+
+                    if playButton.Visible then
+                        for i = 1, 300 do
+                            for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
+                                connection.Function()
+                            end
+                            task.wait(0.2)
+                        end
+
+                        -- ✅ After successful clicks, wait 20s then check macro button state
+                        task.wait(60)
+                        local player = Players.LocalPlayer
+                        local button = player.PlayerGui.MainGui.MacroButtonF.SelectionF.Start.Title.ContentText
+
+                        if button == "START" then
+                            -- username-based choice
+                            local trainingName = "Striking Power Training"
+                            if player.Name == "nzz" or player.Name == "aplayername" then
+                                trainingName = "Strike Speed Training"
+                            end
+
+                            local butt = player.PlayerGui.MainGui.MacroButtonF.SelectionF.SF.Holder:FindFirstChild(trainingName)
+                            if butt then
+                                firesignal(butt.MouseButton1Up)
+                                equipAndActivate()
+                            end
+
+                            task.wait(2) 
+
+                            local startButton = player.PlayerGui.MainGui.MacroButtonF.SelectionF:FindFirstChild("Start")
+                            if startButton then
+                                firesignal(startButton.MouseButton1Up)
+                            end
+                        end
+                    end
+                else
+                    warn("Play button GUI not found in 2 min (not allowed time), continuing macro anyway...")
+                end
+            else
+                TeleportService:Teleport(4878988249, Players.LocalPlayer)
+            end
+        end
+        task.wait(1)
+    end
+end)
