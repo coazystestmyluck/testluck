@@ -3249,7 +3249,16 @@ game.Players.LocalPlayer.Idled:Connect(function()
     end
     end)
 
+local vmm = Vector3.new(-101, -19, 43)
 
+local function tpToVMM()
+    local player = game:GetService("Players").LocalPlayer
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+
+    hrp.CFrame = CFrame.new(vmm)
+end
+tpToVMM()
 
     conz:Toggle("enable auto-replay", true, function(state)
 
