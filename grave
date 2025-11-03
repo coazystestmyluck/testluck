@@ -3226,7 +3226,7 @@ game.Players.LocalPlayer.Idled:Connect(function()
         end)
     end)
 
-    conz:Slider("ATB Distance", { min = 1, max = 10, def = 13 }, function(Value)
+    conz:Slider("ATB Distance", { min = 1, max = 15, def = 12 }, function(Value)
     ATBdistance = Value
     end)
 
