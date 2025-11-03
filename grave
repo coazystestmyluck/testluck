@@ -3047,7 +3047,7 @@ game.Players.LocalPlayer.Idled:Connect(function()
     local hum = char:WaitForChild("Humanoid")
 
 
-    local toolName = "Gravebane"
+    local toolName = "Gravespitter"
 
     -- Try to find the tool in the character or backpack by its name
     local tool = player.Backpack:FindFirstChild(toolName) or character:FindFirstChild(toolName)
