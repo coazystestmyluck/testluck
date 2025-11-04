@@ -2925,7 +2925,7 @@ game.Players.LocalPlayer.Idled:Connect(function()
     LivingThings = workspace:FindFirstChild("Live") or Instance.new("Model")
     local Events = game.ReplicatedStorage.Events
     getgenv().runningSpeed = 500
-    local ATBdistance = 13 --1-10
+    local ATBdistance = 10 --1-10
     local ATBrange = 100 -- 0-100
     local ATBloop = nil
     local angleOffSet = CFrame.Angles(math.rad(-90), 0, 0)
@@ -3226,7 +3226,7 @@ game.Players.LocalPlayer.Idled:Connect(function()
         end)
     end)
 
-    conz:Slider("ATB Distance", { min = 1, max = 15, def = 12 }, function(Value)
+    conz:Slider("ATB Distance", { min = 1, max = 15, def = 10 }, function(Value)
     ATBdistance = Value
     end)
 
