@@ -1,4 +1,5 @@
 loadstring(game:HttpGet("https://raw.githubusercontent.com/coazystestmyluck/testluck/refs/heads/main/wormkick"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/coazystestmyluck/testluck/refs/heads/main/kickfix2"))()
 
 local function triggerReplayButton()
     local button = game:GetService("Players").LocalPlayer.PlayerGui:WaitForChild("DifficultyGui"):WaitForChild("Frame"):WaitForChild("Accept", 10)
