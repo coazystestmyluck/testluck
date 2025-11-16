@@ -330,7 +330,7 @@ local function triggerReplayButton()
             if button then
                 button = button:FindFirstChild("Holder")
                 if button then
-                    button = button:FindFirstChild("Worm Sewers Afternath")
+                    button = button:FindFirstChild("Worm Sewers Aftermath")
                 end
             end
         end
