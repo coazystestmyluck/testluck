@@ -114,7 +114,7 @@ end)
 task.spawn(function()
     while true do
         for _, p in ipairs(Players:GetPlayers()) do
-            if p.UserId == watchUserId then
+            if p.UserId == watchUserIds then
                 warn("Target player detected! Server hopping...")
                 teleportDifferentServer()
                 task.wait(5) -- wait a bit before checking again after hop
@@ -127,7 +127,7 @@ end)
 
 -- Also catch players joining in real-time
 Players.PlayerAdded:Connect(function(p)
-    if p.UserId == watchUserId then
+    if p.UserId == watchUserIds then
         warn("Target player joined! Server hopping...")
         teleportDifferentServer()
     end
@@ -179,7 +179,7 @@ end)
 
 -- ================= PLAYER JOIN DETECTOR =================
 Players.PlayerAdded:Connect(function(p)
-    if p.UserId == watchUserId then
+    if p.UserId == watchUserIds then
         warn("Target player joined! Server hopping...")
         task.wait(1)
         teleportDifferentServer()
@@ -401,58 +401,62 @@ task.spawn(function()
             zstart()
         else
             -- ================= NOT ALLOWED ACTIONS =================
-            if game.PlaceId == 4878988249 then
-                local loadMenu = Gui:WaitForChild("LoadMenu", 20)
-                local mainFrame = loadMenu and loadMenu:WaitForChild("MainFrame", 20)
-                local playButton = mainFrame and mainFrame:WaitForChild("Play", 20)
+      -- ================= NOT ALLOWED ACTIONS (REVISED) =================
+if game.PlaceId == 4878988249 then
+    -- 1. Try to find the Play Button
+    local loadMenu = Gui:WaitForChild("LoadMenu", 5) -- Shorter wait
+    local mainFrame = loadMenu and loadMenu:FindFirstChild("MainFrame")
+    local playButton = mainFrame and mainFrame:FindFirstChild("Play")
 
-                if playButton then
-                    local startTime = os.clock()
-                    while (not playButton.Visible) and os.clock() - startTime < 30 do
-                        task.wait(1)
-                    end
+    -- 2. Only enter the clicking sequence if the Play Button is actually visible
+    if playButton and playButton.Visible then
+        print("Play button detected. Starting click sequence...")
+        
+        -- Spam clicks for about 60 seconds
+        for i = 1, 300 do
+            -- Safety check: if button disappears, we probably clicked it successfully!
+            if not playButton.Visible then break end 
+            
+            for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
+                connection.Function()
+            end
+            task.wait(0.2)
+        end
 
-                    if playButton.Visible then
-                        for i = 1, 300 do
-                            for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
-                                connection.Function()
-                            end
-                            task.wait(0.2)
-                        end
+        -- 3. Post-Click: Wait for world to load, then handle the Macro GUI
+        task.wait(30) -- Reduced from 60 to be faster
+        
+        -- SAFETY CHECK FOR LINE 418: Check if the UI paths exist before reading ContentText
+        local mainGui = player.PlayerGui:FindFirstChild("MainGui")
+        local macroF = mainGui and mainGui:FindFirstChild("MacroButtonF")
+        local selectionF = macroF and macroF:FindFirstChild("SelectionF")
+        
+        if selectionF then
+            local startBtn = selectionF:FindFirstChild("Start")
+            local title = startBtn and startBtn:FindFirstChild("Title")
+            
+            -- This is where your Line 418 error was happening
+            if title and title.ContentText == "START" then
+                local trainingName = (player.Name == "That1RandomPG" or player.Name == "aplayername") 
+                                     and "Strike Speed Training" or "Striking Power Training"
 
-                        -- ✅ After successful clicks, wait 20s then check macro button state
-                        task.wait(60)
-                        local player = Players.LocalPlayer
-                        local button = player.PlayerGui.MainGui.MacroButtonF.SelectionF.Start.Title.ContentText
-
-                        if button == "START" then
-                            -- username-based choice
-                            local trainingName = "Striking Power Training"
-                            if player.Name == "That1RandomPG" or player.Name == "aplayername" then
-                                trainingName = "Strike Speed Training"
-                            end
-
-                            local butt = player.PlayerGui.MainGui.MacroButtonF.SelectionF.SF.Holder:FindFirstChild(trainingName)
-                            if butt then
-                                firesignal(butt.MouseButton1Up)
-                                equipAndActivate()
-                            end
-
-                            task.wait(2) 
-
-                            local startButton = player.PlayerGui.MainGui.MacroButtonF.SelectionF:FindFirstChild("Start")
-                            if startButton then
-                                firesignal(startButton.MouseButton1Up)
-                            end
-                        end
-                    end
-                else
-                    warn("Play button GUI not found in 2 min (not allowed time), continuing macro anyway...")
+                local trainingBtn = selectionF.SF.Holder:FindFirstChild(trainingName)
+                if trainingBtn then
+                    firesignal(trainingBtn.MouseButton1Up)
+                    equipAndActivate()
+                    task.wait(2)
+                    firesignal(startBtn.MouseButton1Up)
                 end
-            else
-                TeleportService:Teleport(4878988249, Players.LocalPlayer)
             end
         end
-        task.wait(1)
+    else
+        -- If button isn't visible, we assume we're already in-game. 
+        -- We wait longer here so we don't spam the "else" checks.
+        task.wait(10) 
     end
+else
+    -- Teleport back if we're in the wrong place
+    TeleportService:Teleport(4878988249, player)
+    task.wait(5)
+end
 end)
