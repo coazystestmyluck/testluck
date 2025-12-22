@@ -414,7 +414,7 @@ task.spawn(function()
                     end
 
                     if playButton.Visible then
-                        for i = 1, 2 do
+                        for i = 1, 20 do
                             for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
                                 connection.Function()
                             end
