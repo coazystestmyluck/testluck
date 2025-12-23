@@ -115,7 +115,7 @@ end)
 task.spawn(function()
     while true do
         for _, p in ipairs(Players:GetPlayers()) do
-            if p.UserId == watchUserId then
+            if p.UserId == watchUserIds then
                 warn("Target player detected! Server hopping...")
                 teleportDifferentServer()
                 task.wait(5) -- wait a bit before checking again after hop
@@ -128,7 +128,7 @@ end)
 
 -- Also catch players joining in real-time
 Players.PlayerAdded:Connect(function(p)
-    if p.UserId == watchUserId then
+    if p.UserId == watchUserIds then
         warn("Target player joined! Server hopping...")
         teleportDifferentServer()
     end
@@ -180,7 +180,7 @@ end)
 
 -- ================= PLAYER JOIN DETECTOR =================
 Players.PlayerAdded:Connect(function(p)
-    if p.UserId == watchUserId then
+    if p.UserId == watchUserIds then
         warn("Target player joined! Server hopping...")
         task.wait(1)
         teleportDifferentServer()
