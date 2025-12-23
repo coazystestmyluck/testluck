@@ -365,7 +365,28 @@ local function zstart()
         end
     end
 end
+-- ================= PLAY BUTTON SPAMMER =================
+local function startPlayButtonSpammer()
+    task.spawn(function()
+        print("Play Button Spammer Started")
+        while true do
+            -- Use pcall so if the GUI is deleted/nil, the loop doesn't break
+            pcall(function()
+                local loadMenu = Gui:FindFirstChild("LoadMenu")
+                local mainFrame = loadMenu and loadMenu:FindFirstChild("MainFrame")
+                local playButton = mainFrame and mainFrame:FindFirstChild("Play")
 
+                if playButton and playButton.Visible then
+                    -- This fires the actual logic behind the button
+                    for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
+                        connection.Function()
+                    end
+                end
+            end)
+            task.wait(0.1) -- Adjust speed here (0.1 is very fast spam)
+        end
+    end)
+end
 -- ================= LOOP =================
 task.spawn(function()
     while true do
@@ -414,11 +435,7 @@ task.spawn(function()
                     end
 
                     if playButton.Visible then
-                        for i = 1, 20 do
-                            for _, connection in ipairs(getconnections(playButton.MouseButton1Click)) do
-                                connection.Function()
-                            end
-                            task.wait(0.2)
+                     startPlayButtonSpammer()
                         end
 
                         -- ✅ After successful clicks, wait 20s then check macro button state
